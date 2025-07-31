@@ -454,21 +454,21 @@ const SessionManagement: React.FC = () => {
   };
 
   const getDisplayName = (session: ActiveSession | EndedBookingSession) => {
-    if (session.session_type === 'booking' && session.booking?.customer_name) {
+    if ('booking' in session && session.booking?.customer_name) {
       return session.booking.customer_name;
     }
     return session.user.name;
   };
 
   const getDisplayEmail = (session: ActiveSession | EndedBookingSession) => {
-    if (session.session_type === 'booking' && session.booking?.customer_email) {
+    if ('booking' in session && session.booking?.customer_email) {
       return session.booking.customer_email;
     }
     return session.user.email;
   };
 
   const getDisplayWhatsApp = (session: ActiveSession | EndedBookingSession) => {
-    if (session.session_type === 'booking' && session.booking?.customer_whatsapp) {
+    if ('booking' in session && session.booking?.customer_whatsapp) {
       return session.booking.customer_whatsapp;
     }
     return session.user.whatsapp;

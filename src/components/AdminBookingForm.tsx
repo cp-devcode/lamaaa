@@ -210,51 +210,34 @@ const createNewClient = async () => {
   setIsSubmittingClient(true);
 
   try {
-    // ✅ Capture the current admin session before creating a new user
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError) throw new Error('Unable to retrieve current session');
-    const adminSession = sessionData?.session;
-    if (!adminSession) throw new Error('Admin session is not available');
-
     const randomPassword =
       Math.random().toString(36).slice(-8) +
       Math.random().toString(36).slice(-8);
 
-    // ✅ Create user (this switches the session to the new user)
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: newClientData.email,
-      password: randomPassword,
-      options: {
-        data: {
-          name: newClientData.name,
-          whatsapp: newClientData.whatsapp,
-          role: 'customer',
-        },
-      },
-    });
+    // Create user directly in the users table without affecting auth session
+    const userId = crypto.randomUUID();
+    const { error: insertError } = await supabase
+      .from('users')
+      .insert({
+        id: userId,
+        email: newClientData.email,
+        name: newClientData.name,
+        whatsapp: newClientData.whatsapp,
+        phone: newClientData.phone,
+        role: 'customer'
+      });
 
-    if (authError) throw new Error(`Failed to create user account: ${authError.message}`);
-    if (!authData.user) throw new Error('Failed to create user account');
+    if (insertError) throw new Error(`Failed to create user: ${insertError.message}`);
 
-    // ✅ Restore admin session after sign-up
-    await supabase.auth.setSession({
-      access_token: adminSession.access_token,
-      refresh_token: adminSession.refresh_token,
-    });
-
-    // ✅ Refresh user context to reflect restored session
-    await refreshUserSession();
-
-    // ✅ Get the created user data (the user profile should be created automatically via database trigger)
     const userData = {
-      id: authData.user.id,
+      id: userId,
       email: newClientData.email,
       name: newClientData.name,
       whatsapp: newClientData.whatsapp,
       role: 'customer',
     };
 
-    // ✅ Notify webhook
+    // Notify webhook
     try {
       await fetch('https://aibackend.cp-devcode.com/webhook/1ef572d1-3263-4784-bc19-c38b3fbc09d0', {
         method: 'POST',
@@ -276,7 +259,7 @@ const createNewClient = async () => {
       console.error('Webhook failed:', webhookError);
     }
 
-    // ✅ Update local state
+    // Update local state
     await fetchClients();
     handleClientSelect(userData);
     setNewClientData({ name: '', email: '', whatsapp: '', phone: '' });

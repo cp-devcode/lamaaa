@@ -704,6 +704,12 @@ const AdminClientProfilePage: React.FC = () => {
                     
                     {userSubscription.status === 'active' && (
                       <div className="mt-4 pt-4 border-t">
+                        {/* Check if user has an active session */}
+                        {userSessions.some(session => session.status === 'active') ? (
+                          <div className="w-full bg-gray-300 text-gray-600 py-2 px-4 rounded-md text-sm font-semibold text-center cursor-not-allowed">
+                            Session Already Active
+                          </div>
+                        ) : (
                         <button
                           onClick={startUserSession}
                           disabled={startingSession}
@@ -721,6 +727,7 @@ const AdminClientProfilePage: React.FC = () => {
                             </>
                           )}
                         </button>
+                        )}
                       </div>
                     )}
                   </div>
